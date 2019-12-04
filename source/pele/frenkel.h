@@ -47,7 +47,7 @@ namespace pele {
       double ir2 = 1.0/r2;
       double cutoff_factor = _rcut2*ir2 - 1;
       double sigma_factor = _sig2*ir2 - 1;
-      *gij= -_prefactor*(2*_sig2*cutoff_factor*cutoff_factor + 4*_rcut2*cutoff_factor*sigma_factor)*ir2*ir2;
+      *gij= _prefactor*(2*_sig2*cutoff_factor*cutoff_factor + 4*_rcut2*cutoff_factor*sigma_factor)*ir2*ir2;
       double energy = _prefactor * cutoff_factor * cutoff_factor * sigma_factor;
       return energy;
     }
@@ -56,7 +56,7 @@ namespace pele {
       double ir2 = 1.0/r2;
       double cutoff_factor = _rcut2*ir2 - 1;
       double sigma_factor = _sig2*ir2 - 1;
-      *gij= -_prefactor*(2*_sig2*cutoff_factor*cutoff_factor + 4*_rcut2*cutoff_factor*sigma_factor)*ir2*ir2;
+      *gij= _prefactor*(2*_sig2*cutoff_factor*cutoff_factor + 4*_rcut2*cutoff_factor*sigma_factor)*ir2*ir2;
       *hij = _prefactor*(16*_rcut2*cutoff_factor*_sig2*ir2 +6*cutoff_factor*cutoff_factor*_sig2 + 8*_rcut2*_rcut2*sigma_factor*ir2 + 12*_rcut2*cutoff_factor*sigma_factor);
       double energy = _prefactor * cutoff_factor * cutoff_factor * sigma_factor;
       return energy;

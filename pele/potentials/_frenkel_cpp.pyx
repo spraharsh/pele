@@ -37,7 +37,7 @@ cdef class Frenkel(_pele.BasePotential):
     """define the python interface to the c++ Frenkel implementation
     """
     cpdef bool periodic
-    def __cinit__(self, natoms, sig=1.0, eps=1.0, rcut=2.0, boxvec=None, boxl=None):
+    def __cinit__(self,  sig=1.0, eps=1.0, rcut=2.0, boxvec=None, boxl=None):
         assert not (boxvec is not None and boxl is not None)
         if boxl is not None:
             boxvec = [boxl] * 3
