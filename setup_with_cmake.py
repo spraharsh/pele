@@ -248,6 +248,7 @@ extra_compile_args = ['-std=c++0x',"-Wall", "-O3", '-funroll-loops', "-fopenmp",
 cmake_build_dir = "build/cmake"
 
 cxx_files = ["pele/potentials/_lj_cpp.cxx",
+             "pele/potentials/_frenkel_cpp.cxx",
              "pele/potentials/_morse_cpp.cxx",
              "pele/potentials/_frozen_dof.cxx",
              "pele/potentials/_hs_wca_cpp.cxx",
