@@ -19,6 +19,11 @@ from pele.potentials._pele cimport array_wrap_np
 # will fail if you try to use it as _pele.BasePotential.  I don't know why this
 # is
 
+
+
+
+
+
 # use external c++ class
 # cdef extern from "pele/_frenkel.h" namespace "pele":
 #     cdef cppclass  cFrenkel "pele::Frenkel":
@@ -32,6 +37,8 @@ cdef extern from "pele/frenkel.h" namespace "pele":
         cFrenkel(double sig, double eps, double rcut) except +
     cdef cppclass  cFrenkelPeriodic "pele::FrenkelPeriodic":
         cFrenkelPeriodic(double sig, double eps, double rcut, _pele.Array[double] boxvec) except +
+    cdef cppclass  cFrenkelNeighborList "pele::FrenkelNeighborList":
+        cFrenkelNeighborList(_pele.Array[size_t] & ilist, double sig, double eps, double rcut) except +
 
 cdef class Frenkel(_pele.BasePotential):
     """define the python interface to the c++ Frenkel implementation
