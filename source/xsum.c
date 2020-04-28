@@ -7,6 +7,7 @@
 #include <string.h>
 #include "pele/xsum.h"
 #include "pele/pbinary.h"
+#include "pele/avxmem.h"
 
 
 /* SET UP DEBUG FLAG.  It's a variable if debuging is enabled, and a
@@ -22,7 +23,7 @@ int xsum_debug = 0;
 /* IMPLEMENTATION OPTIONS.  Can be set to either 0 or 1, whichever seems
    to be fastest. */
 
-#define USE_MEMSET_SMALL 0  /* Use memset rather than a loop (for small mem)? */
+#define USE_MEMSET_SMALL 1  /* Use memset rather than a loop (for small mem)? */
 #define USE_MEMSET_LARGE 1  /* Use memset rather than a loop (for large mem)? */
 #define USE_USED_LARGE 1    /* Use the used flags in a large accumulator? */
 
@@ -58,7 +59,7 @@ union fpunion { xsum_flt fltv; xsum_int intv; xsum_uint uintv; };
 void xsum_small_init (xsum_small_accumulator *restrict sacc)
 { 
 # if USE_MEMSET_SMALL
-    memset (sacc, 0, sizeof *sacc);
+    AVX_memset(sacc, 0, sizeof *sacc);
 # else
   { xsum_schunk *p;
     int n;
