@@ -1,13 +1,14 @@
-#include "pele/cvode.h"
+#include "pele/cvode.hpp"
 #include "Eigen/src/Core/Matrix.h"
 #include "cvode/cvode.h"
 #include "cvode/cvode_ls.h"
 #include "nvector/nvector_serial.h"
-#include "pele/optimizer.h"
-#include "pele/debug.h"
+#include "pele/optimizer.hpp"
+#include "pele/debug.hpp"
 #include "sundials/sundials_linearsolver.h"
 #include "sundials/sundials_nvector.h"
 #include "sunmatrix/sunmatrix_dense.h"
+#include "sunmatrix/sunmatrix_sparse.h"
 #include <cstddef>
 #include <iostream>
 #include <memory>
@@ -28,6 +29,7 @@ CVODEBDFOptimizer::CVODEBDFOptimizer(std::shared_ptr<pele::BasePotential> potent
     // dummy t0
     double t0 = 0;
     std::cout << x0 << "\n";
+    
     Array<double> x0copy = x0.copy();
     x0_N = N_Vector_eq_pele(x0copy);
     // initialization of everything CVODE needs
@@ -41,11 +43,18 @@ CVODEBDFOptimizer::CVODEBDFOptimizer(std::shared_ptr<pele::BasePotential> potent
     udata.stored_grad = Array<double>(x0.size(), 0);
     CVodeSStolerances(cvode_mem, udata.rtol, udata.atol);
     ret = CVodeSetUserData(cvode_mem, &udata);
-    
+
+    // define a sparse matrix
+    int nnz;
+    nnz = N_size*N_size;
+    A_sparse = SUNSparseMatrix(N_size, N_size, nnz, CSR_MAT);
     A = SUNDenseMatrix(N_size, N_size);
-    LS = SUNLinSol_Dense(x0_N, A);
+    udata.A = A;
+
     
-    CVodeSetLinearSolver(cvode_mem, LS, A);
+    LS = SUNLinSol_KLU(x0_N, A_sparse);
+    
+    CVodeSetLinearSolver(cvode_mem, LS, A_sparse);
     CVodeSetJacFn(cvode_mem, Jac);
     g_ = udata.stored_grad;
     CVodeSetMaxNumSteps(cvode_mem, 1000000);
@@ -58,7 +67,7 @@ void CVODEBDFOptimizer::one_iteration() {
     /* advance solver just one internal step */
     Array<double> xold = x_;
     int flag = CVode(cvode_mem, tN, x0_N, &t0, CV_ONE_STEP);
-    iter_number_ +=1;
+    iter_number_ += 1;
     x_ = pele_eq_N_Vector(x0_N);
     g_ = udata.stored_grad;
     rms_ = (norm(g_)/sqrt(x_.size()));
@@ -70,18 +79,18 @@ void CVODEBDFOptimizer::one_iteration() {
     // simply print the energy and lambdamin/lambdamax as csv values and write stdout to file
     // then plot them using python
 
-    // // get hessian routine
-    // Array<double> hess(xold.size() * xold.size());
-    // Array<double> grad(xold.size());
-    // double e = potential_->get_energy_gradient_hessian(x_, grad, hess);
-    // Eigen::MatrixXd hess_dense(xold.size(), xold.size());
-    // udata.nhev += 1;
-    // hess_dense.setZero();
-    // for (size_t i = 0; i < xold.size(); ++i) {
-    //     for (size_t j = 0; j < xold.size(); ++j) {
-    //         hess_dense(i, j) = hess[i + grad.size() * j];
-    //     }
-    // }
+    // get hessian routine
+    Array<double> hess(xold.size() * xold.size());
+    Array<double> grad(xold.size());
+    double e = potential_->get_energy_gradient_hessian(x_, grad, hess);
+    Eigen::MatrixXd hess_dense(xold.size(), xold.size());
+    udata.nhev += 1;
+    hess_dense.setZero();
+    for (size_t i = 0; i < xold.size(); ++i) {
+        for (size_t j = 0; j < xold.size(); ++j) {
+            hess_dense(i, j) = hess[i + grad.size() * j];
+        }
+    }
     // // calculate minimum and maximum eigenvalue 
     // Eigen::VectorXd eigvals = hess_dense.eigenvalues().real();
     // double minimum = eigvals.minCoeff();
@@ -129,10 +138,11 @@ int Jac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J,
     Array<double> h = Array<double>(yw.size()*yw.size());
     udata->pot_->get_energy_gradient_hessian(pele_eq_N_Vector(y), g, h);
     udata->nhev += 1;
-    double * hessdata = SUNDenseMatrix_Data(J);
+    double * hessdata = SUNDenseMatrix_Data(udata->A);
     for (size_t i=0; i<h.size(); ++i) {
         hessdata[i] = -h[i];
     }
+    J = SUNSparseFromDenseMatrix(udata->A, 1e-15, CSR_MAT);
     return 0;
 };
 

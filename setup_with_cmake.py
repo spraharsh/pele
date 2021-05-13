@@ -51,15 +51,13 @@ else:
 
 
 #extra compiler args
-cmake_compiler_extra_args = ["-std=c++1z","-Wall", "-Wextra", "-pedantic", "-O3", "-fPIC"]
+cmake_compiler_extra_args = ["-I/home/praharsh/.local/include", "-std=c++1z", "-O3", "-fPIC"]
 if idcompiler.lower() == 'unix':
     cmake_compiler_extra_args += ['-march=native', '-flto', '-fopenmp']
 else:
     cmake_compiler_extra_args += ['-axCORE-AVX2', '-ipo', '-qopenmp', '-ip', '-unroll']
     if jargs.opt_report:
         cmake_compiler_extra_args += ['-qopt-report=5']
-
-
 
 
 

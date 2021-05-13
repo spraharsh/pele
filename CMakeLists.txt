@@ -27,10 +27,17 @@ set(SUNDIALS_LIBRARY_DIR
   CACHE PATH "Location of SUNDIALS libraries")
 
 
+
+
 # Find the SUNDIALS libraries
 find_library(SUNDIALS_SOLVER_LIB
   sundials_cvode ${SUNDIALS_LIBRARY_DIR}
   DOC "CVODE library")
+
+find_library(SUNDIALS_SOLVER_KLU
+  sundials_sunlinsolklu ${SUNDIALS_LIBRARY_DIR}
+  DOC "CVODE library")
+
 
 find_library(SUNDIALS_NVEC_LIB
   sundials_nvecserial ${SUNDIALS_LIBRARY_DIR}
@@ -43,6 +50,7 @@ find_library(SUNDIALS_MANYVEC_LIB
 set(SUNDIALS_LIBRARIES
   -L${SUNDIALS_LIBRARY_DIR}
   ${SUNDIALS_SOLVER_LIB}
+  ${SUNDIALS_KLU_LIB}
   ${SUNDIALS_NVEC_LIB}
   ${SUNDIALS_MANYVEC_LIB}
   ${SUNDIALS_EXTRA_LIBS})
@@ -63,9 +71,19 @@ cmake_minimum_required(VERSION 2.8)
 
 
 enable_language(CXX)
-SET(CMAKE_CXX_FLAGS "-std=c++1z -Wall -Wextra -pedantic -O3 -fPIC -march=native -flto -fopenmp")
+SET(CMAKE_CXX_FLAGS "-I/home/praharsh/.local/include -std=c++1z -O3 -fPIC -march=native -flto -fopenmp")
 
 #cmake_policy(SET CMP0015 NEW)
+
+
+# KLU include directory and libraries
+set(KLU_INCLUDE_DIR
+  /home/praharsh/.local/include
+  CACHE PATH "Location of KLU header files")
+
+set(KLU_LIBRARIES /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libklu.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libcolamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libbtf.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libsuitesparseconfig.so
+  CACHE STRING "KLU libraries")
+
 
 # set the pele include directory
 set(pele_include ${CMAKE_CURRENT_SOURCE_DIR}/source)
@@ -76,6 +94,7 @@ message("pele include directory: ${pele_include}")
 # This is a likely source of undefined symbol errors
 include_directories(${pele_include})
 include_directories(${SUNDIALS_INCLUDE_DIR})
+include_directories(${KLU_INCLUDE_DIR})
 FILE(GLOB pele_sources ${pele_include}/*.c*)
 add_library(pele_lib SHARED ${pele_sources})
 
@@ -85,6 +104,7 @@ function(make_cython_lib cython_cxx_source)
   add_library(${library_name} SHARED ${cython_cxx_source})
   target_link_libraries(${library_name} pele_lib)
   target_link_libraries(${library_name} ${SUNDIALS_LIBRARIES})
+  target_link_libraries(${library_name} ${KLU_LIBRARIES})
   set_target_properties(${library_name} PROPERTIES PREFIX "")
   message("making library ${library_name} from source ${cython_cxx_source}")
 endfunction(make_cython_lib)
