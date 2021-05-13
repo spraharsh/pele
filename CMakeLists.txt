@@ -1,9 +1,9 @@
 # this file is meant to be parsed by python before being a proper CMakeLists.txt file
 # in particular, the following strings will be set to their proper values by python when
 # making CMakeLists.txt
-set(numpy_include /home/praharsh/anaconda3/lib/python3.8/site-packages/numpy/core/include)
-set(PYTHON_INCLUDE_DIRS /home/praharsh/anaconda3/include/python3.8 /home/praharsh/anaconda3/include/python3.8)
-set(PYTHON_LDFLAGS "-L/home/praharsh/anaconda3/lib/python3.8/config-3.8-x86_64-linux-gnu -lpthread -ldl -lutil -lrt -lm -lpython3.8 -Xlinker -export-dynamic")
+set(numpy_include /home/praharsh/anaconda3/envs/changebranch3/lib/python3.8/site-packages/numpy/core/include)
+set(PYTHON_INCLUDE_DIRS /home/praharsh/anaconda3/envs/changebranch3/include/python3.8 /home/praharsh/anaconda3/envs/changebranch3/include/python3.8)
+set(PYTHON_LDFLAGS "-L/home/praharsh/anaconda3/envs/changebranch3/lib/python3.8/config-3.8-x86_64-linux-gnu -lpthread -ldl -lutil -lrt -lm -lpython3.8 -Xlinker -export-dynamic")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #find_package(PythonLibs)
 #message("PYTHON_LIBRARIES ${PYTHON_LIBRARIES}")
@@ -27,8 +27,6 @@ set(SUNDIALS_LIBRARY_DIR
   CACHE PATH "Location of SUNDIALS libraries")
 
 
-
-
 # Find the SUNDIALS libraries
 find_library(SUNDIALS_SOLVER_LIB
   sundials_cvode ${SUNDIALS_LIBRARY_DIR}
@@ -37,6 +35,12 @@ find_library(SUNDIALS_SOLVER_LIB
 find_library(SUNDIALS_SOLVER_KLU
   sundials_sunlinsolklu ${SUNDIALS_LIBRARY_DIR}
   DOC "CVODE library")
+
+find_library(SUNDIALS_SUNLINSOLKLU_LIB
+  sundials_sunlinsolklu ${SUNDIALS_LIBRARY_DIR}
+  DOC "SUNDIALS KLU linear solver library")
+
+
 
 
 find_library(SUNDIALS_NVEC_LIB
@@ -81,7 +85,8 @@ set(KLU_INCLUDE_DIR
   /home/praharsh/.local/include
   CACHE PATH "Location of KLU header files")
 
-set(KLU_LIBRARIES /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libklu.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libcolamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libbtf.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libsuitesparseconfig.so
+set(KLU_LIBRARIES
+  /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libklu.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libcolamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libbtf.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libsuitesparseconfig.so
   CACHE STRING "KLU libraries")
 
 
@@ -104,6 +109,7 @@ function(make_cython_lib cython_cxx_source)
   add_library(${library_name} SHARED ${cython_cxx_source})
   target_link_libraries(${library_name} pele_lib)
   target_link_libraries(${library_name} ${SUNDIALS_LIBRARIES})
+  target_link_libraries(${library_name} ${SUNDIALS_SUNLINSOLKLU_LIB})
   target_link_libraries(${library_name} ${KLU_LIBRARIES})
   set_target_properties(${library_name} PROPERTIES PREFIX "")
   message("making library ${library_name} from source ${cython_cxx_source}")

@@ -6,10 +6,12 @@
 #include "pele/optimizer.hpp"
 #include "pele/debug.hpp"
 #include "sundials/sundials_linearsolver.h"
+#include "sundials/sundials_matrix.h"
 #include "sundials/sundials_nvector.h"
 #include "sunmatrix/sunmatrix_dense.h"
 #include "sunmatrix/sunmatrix_sparse.h"
 #include <cstddef>
+#include <cstdio>
 #include <iostream>
 #include <memory>
 
@@ -142,9 +144,9 @@ int Jac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J,
     for (size_t i=0; i<h.size(); ++i) {
         hessdata[i] = -h[i];
     }
-    J = SUNSparseFromDenseMatrix(udata->A, 1e-15, CSR_MAT);
+    J = SUNSparseFromDenseMatrix(udata->A, 0, CSC_MAT);
+    SUNDenseMatrix_Print(udata->A, stdout);
+    SUNSparseMatrix_Print(J, stdout);
     return 0;
 };
-
-
 } // namespace pele
