@@ -53,6 +53,7 @@ CVODEBDFOptimizer::CVODEBDFOptimizer(std::shared_ptr<pele::BasePotential> potent
     A = SUNDenseMatrix(N_size, N_size);
     udata.A = A;
 
+
     
     LS = SUNLinSol_KLU(x0_N, A_sparse);
     
@@ -76,77 +77,45 @@ void CVODEBDFOptimizer::one_iteration() {
     f_ = udata.stored_energy;
     nfev_ = udata.nfev;
     Array<double> step = xold-x_;
-
-    // really hacky way to output $lambdamin/lambdamax on a low tolerance run
-    // simply print the energy and lambdamin/lambdamax as csv values and write stdout to file
-    // then plot them using python
-
-    // get hessian routine
-    Array<double> hess(xold.size() * xold.size());
-    Array<double> grad(xold.size());
-    double e = potential_->get_energy_gradient_hessian(x_, grad, hess);
-    Eigen::MatrixXd hess_dense(xold.size(), xold.size());
-    udata.nhev += 1;
-    hess_dense.setZero();
-    for (size_t i = 0; i < xold.size(); ++i) {
-        for (size_t j = 0; j < xold.size(); ++j) {
-            hess_dense(i, j) = hess[i + grad.size() * j];
-        }
-    }
-    // // calculate minimum and maximum eigenvalue 
-    // Eigen::VectorXd eigvals = hess_dense.eigenvalues().real();
-    // double minimum = eigvals.minCoeff();
-    // double maximum = eigvals.maxCoeff();
-
-    // double convexity_estimate;
-
-    // if (minimum<0) {
-    //     convexity_estimate = std::abs(minimum / maximum);
-    // }
-    // else {
-    //     convexity_estimate = 0;
-    // }
-    // std::cout << e << "," << convexity_estimate << "," << minimum << "," << maximum << "\n";
-    // // TODO: This is terrible C++ code but write it better
 };
 
 int f(double t, N_Vector y, N_Vector ydot, void *user_data) {
 
-    UserData udata = (UserData) user_data;
-    pele::Array<double> yw = pele_eq_N_Vector(y);
-    Array<double> g;
-    // double energy = udata->pot_->get_energy_gradient(yw, g);
-    double *fdata = NV_DATA_S(ydot);
-    g = Array<double>(fdata, NV_LENGTH_S(ydot));
+  UserData udata = (UserData)user_data;
+  pele::Array<double> yw = pele_eq_N_Vector(y);
+  Array<double> g;
+  // double energy = udata->pot_->get_energy_gradient(yw, g);
+  double *fdata = NV_DATA_S(ydot);
+  g = Array<double>(fdata, NV_LENGTH_S(ydot));
 
-    // calculate negative grad g
-    double energy = udata->pot_->get_energy_gradient(yw, g);
-    udata->nfev += 1;
+  // calculate negative grad g
+  double energy = udata->pot_->get_energy_gradient(yw, g);
+  udata->nfev += 1;
 #pragma simd
-    for (size_t i = 0; i < yw.size(); ++i) {
-        fdata[i] = -fdata[i];
-    }
-    udata->stored_grad = (g);
-    udata->stored_energy = energy;
-    return 0;
+  for (size_t i = 0; i < yw.size(); ++i) {
+    fdata[i] = -fdata[i];
+  }
+  udata->stored_grad = (g);
+  udata->stored_energy = energy;
+  return 0;
 }
 
-int Jac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J,
-        void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) {
-    UserData udata = (UserData) user_data;
-
-    pele::Array<double> yw = pele_eq_N_Vector(y);
-    Array<double> g = Array<double>(yw.size());
-    Array<double> h = Array<double>(yw.size()*yw.size());
-    udata->pot_->get_energy_gradient_hessian(pele_eq_N_Vector(y), g, h);
-    udata->nhev += 1;
-    double * hessdata = SUNDenseMatrix_Data(udata->A);
-    for (size_t i=0; i<h.size(); ++i) {
-        hessdata[i] = -h[i];
-    }
-    J = SUNSparseFromDenseMatrix(udata->A, 0, CSC_MAT);
-    SUNDenseMatrix_Print(udata->A, stdout);
-    SUNSparseMatrix_Print(J, stdout);
-    return 0;
+int Jac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *user_data,
+        N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) {
+  UserData udata = (UserData)user_data;
+  std::cout << J << "J before \n";
+  pele::Array<double> yw = pele_eq_N_Vector(y);
+  Array<double> g = Array<double>(yw.size());
+  Array<double> h = Array<double>(yw.size() * yw.size());
+  udata->pot_->get_energy_gradient_hessian(pele_eq_N_Vector(y), g, h);
+  udata->nhev += 1;
+  double *hessdata = SUNDenseMatrix_Data(udata->A);
+  for (size_t i = 0; i < h.size(); ++i) {
+    hessdata[i] = -h[i];
+  }
+  SUNMatrix J_sparse_dummy;
+  J_sparse_dummy = SUNSparseFromDenseMatrix(udata->A, 0, CSR_MAT);
+  SUNMatCopy_Sparse(J_sparse_dummy, J);
+  return 0;
 };
 } // namespace pele
