@@ -29,6 +29,13 @@ set(SUNDIALS_LIBRARY_DIR
   /home/praharsh/.local/lib
   CACHE PATH "Location of SUNDIALS libraries")
 
+find_library(SUNDIALS_SOLVER_KLU
+  sundials_sunlinsolklu ${SUNDIALS_LIBRARY_DIR}
+  DOC "CVODE library")
+find_library(SUNDIALS_SUNLINSOLKLU_LIB
+  sundials_sunlinsolklu ${SUNDIALS_LIBRARY_DIR}
+  DOC "SUNDIALS KLU linear solver library")
+
 
 # Find the SUNDIALS libraries
 find_library(SUNDIALS_SOLVER_LIB
@@ -46,6 +53,7 @@ find_library(SUNDIALS_MANYVEC_LIB
 set(SUNDIALS_LIBRARIES
   -L${SUNDIALS_LIBRARY_DIR}
   ${SUNDIALS_SOLVER_LIB}
+  ${SUNDIALS_KLU_LIB}
   ${SUNDIALS_NVEC_LIB}
   ${SUNDIALS_MANYVEC_LIB}
   ${SUNDIALS_EXTRA_LIBS})
@@ -62,10 +70,20 @@ set(gtest_libs gtest gtest_main)
 message("gtest_libs ${gtest_libs}")
 
 
+
+# KLU include directory and libraries
+set(KLU_INCLUDE_DIR
+  /home/praharsh/.local/include
+  CACHE PATH "Location of KLU header files")
+
+set(KLU_LIBRARIES /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libklu.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libcolamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libbtf.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libsuitesparseconfig.so
+  CACHE STRING "KLU libraries")
+
 # set the pele include directory
 set(pele_include ../../source)
 include_directories(${pele_include})
 include_directories(${SUNDIALS_INCLUDE_DIR})
+include_directories(${KLU_INCLUDE_DIR})
 message("pele include directory ${pele_include}")
 
 # build the pele library
@@ -78,7 +96,9 @@ FILE(GLOB sources *.c*)
 add_executable(test_main ${sources})
 target_link_libraries(test_main pele_lib gtest gtest_main pthread)
 target_link_libraries(test_main ${SUNDIALS_LIBRARIES})
-
+target_link_libraries(test_main ${SUNDIALS_SUNLINSOLKLU_LIB})
+target_link_libraries(test_main ${SUNDIALS_SUNLINSOLKLU_LIB})
+target_link_libraries(test_main ${KLU_LIBRARIES})
 add_subdirectory(benchmarks)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)

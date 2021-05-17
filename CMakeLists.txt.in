@@ -85,8 +85,8 @@ set(KLU_INCLUDE_DIR
   /home/praharsh/.local/include
   CACHE PATH "Location of KLU header files")
 
-set(KLU_LIBRARIES
-  /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libklu.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libcolamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libbtf.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libsuitesparseconfig.so
+
+set(KLU_LIBRARIES  /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libklu.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libcolamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libbtf.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libsuitesparseconfig.so
   CACHE STRING "KLU libraries")
 
 
