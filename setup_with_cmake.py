@@ -321,8 +321,8 @@ def set_compiler_env(compiler_id):
     
     if compiler_id.lower() in ("unix"):
         print(env, 'eeenv')
-        env["CC"] = (subprocess.check_output(["which", "gcc"])).decode(encoding).rstrip('\n')
-        env["CXX"] = (subprocess.check_output(["which", "g++"])).decode(encoding).rstrip('\n')
+        env["CC"] = (subprocess.check_output(["which", "gcc-11"])).decode(encoding).rstrip('\n')
+        env["CXX"] = (subprocess.check_output(["which", "g++-11"])).decode(encoding).rstrip('\n')
         env["LD"] = (subprocess.check_output(["which", "ld"])).decode(encoding).rstrip('\n')
         env["AR"] = (subprocess.check_output(["which", "ar"])).decode(encoding).rstrip('\n')
     elif compiler_id.lower() in ("intel"):

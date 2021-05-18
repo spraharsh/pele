@@ -9,7 +9,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 enable_language(CXX)
 ADD_DEFINITIONS(-std=c++1z -g)
-ADD_DEFINITIONS(-Wall)
+# ADD_DEFINITIONS(-Wall)
 
 #set OpenMP
 find_package(OpenMP)
@@ -19,7 +19,9 @@ if (OPENMP_FOUND)
 endif()
 
 #cmake_policy(SET CMP0015 NEW)
-
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/home/praharsh/.local/include -O0 -ggdb3 -fsanitize=address -fno-omit-frame-pointer -fno-inline")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/home/praharsh/.local/include -O0 -ggdb3 -fsanitize=address -fno-omit-frame-pointer -fno-inline")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # set(SUNDIALS_EXTRA_LIBS  -lm /home/praharsh/anaconda3/x86_64-conda_cos6-linux-gnu/sysroot/usr/lib/librt.so CACHE STRING "Additional libraries")
 set(SUNDIALS_INCLUDE_DIR
@@ -73,7 +75,7 @@ message("gtest_libs ${gtest_libs}")
 
 # KLU include directory and libraries
 set(KLU_INCLUDE_DIR
-  /home/praharsh/.local/include
+  /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/include/
   CACHE PATH "Location of KLU header files")
 
 set(KLU_LIBRARIES /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libklu.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libcolamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libbtf.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libsuitesparseconfig.so

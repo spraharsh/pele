@@ -52,11 +52,9 @@ CVODEBDFOptimizer::CVODEBDFOptimizer(std::shared_ptr<pele::BasePotential> potent
     A_sparse = SUNSparseMatrix(N_size, N_size, nnz, CSR_MAT);
     A = SUNDenseMatrix(N_size, N_size);
     udata.A = A;
-
-
-    
+    N_VPrint(x0_N);
     LS = SUNLinSol_KLU(x0_N, A_sparse);
-    
+    CVodeSStolerances(cvode_mem, udata.rtol, udata.atol);
     CVodeSetLinearSolver(cvode_mem, LS, A_sparse);
     CVodeSetJacFn(cvode_mem, Jac);
     g_ = udata.stored_grad;
@@ -77,6 +75,9 @@ void CVODEBDFOptimizer::one_iteration() {
     f_ = udata.stored_energy;
     nfev_ = udata.nfev;
     Array<double> step = xold-x_;
+    std::cout << step << "step out \n";
+
+    
 };
 
 int f(double t, N_Vector y, N_Vector ydot, void *user_data) {

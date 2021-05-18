@@ -1,9 +1,9 @@
 # this file is meant to be parsed by python before being a proper CMakeLists.txt file
 # in particular, the following strings will be set to their proper values by python when
 # making CMakeLists.txt
-set(numpy_include /home/praharsh/anaconda3/envs/changebranch3/lib/python3.8/site-packages/numpy/core/include)
-set(PYTHON_INCLUDE_DIRS /home/praharsh/anaconda3/envs/changebranch3/include/python3.8 /home/praharsh/anaconda3/envs/changebranch3/include/python3.8)
-set(PYTHON_LDFLAGS "-L/home/praharsh/anaconda3/envs/changebranch3/lib/python3.8/config-3.8-x86_64-linux-gnu -lpthread -ldl -lutil -lrt -lm -lpython3.8 -Xlinker -export-dynamic")
+set(numpy_include /home/praharsh/anaconda3/lib/python3.8/site-packages/numpy/core/include)
+set(PYTHON_INCLUDE_DIRS /home/praharsh/anaconda3/include/python3.8 /home/praharsh/anaconda3/include/python3.8)
+set(PYTHON_LDFLAGS "-L/home/praharsh/anaconda3/lib/python3.8/config-3.8-x86_64-linux-gnu -lpthread -ldl -lutil -lrt -lm -lpython3.8 -Xlinker -export-dynamic")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #find_package(PythonLibs)
 #message("PYTHON_LIBRARIES ${PYTHON_LIBRARIES}")
@@ -82,11 +82,11 @@ SET(CMAKE_CXX_FLAGS "-I/home/praharsh/.local/include -std=c++1z -O3 -fPIC -march
 
 # KLU include directory and libraries
 set(KLU_INCLUDE_DIR
-  /home/praharsh/.local/include
+  /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/include/
   CACHE PATH "Location of KLU header files")
 
-set(KLU_LIBRARIES
-  /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libklu.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libcolamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libbtf.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libsuitesparseconfig.so
+
+set(KLU_LIBRARIES  /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libklu.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libcolamd.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libbtf.so;/home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/lib/libsuitesparseconfig.so
   CACHE STRING "KLU libraries")
 
 

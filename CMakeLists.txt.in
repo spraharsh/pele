@@ -82,7 +82,7 @@ SET(CMAKE_CXX_FLAGS __COMPILER_EXTRA_ARGS__)
 
 # KLU include directory and libraries
 set(KLU_INCLUDE_DIR
-  /home/praharsh/.local/include
+  /home/praharsh/Dropbox/research/bv-libraries/SuiteSparse/include/
   CACHE PATH "Location of KLU header files")
 
 
