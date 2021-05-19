@@ -94,7 +94,7 @@ void CVODEBDFOptimizer::jac_setup_sparse() {
     udata.A = A;
     LS = SUNLinSol_KLU(x0_N, A_sparse);
     CVodeSetLinearSolver(cvode_mem, LS, A_sparse);
-    CVodeSetJacFn(cvode_mem, Jac);
+    CVodeSetJacFn(cvode_mem, Jac_sparse);
 }
 
 int f(double t, N_Vector y, N_Vector ydot, void *user_data) {
