@@ -44,21 +44,19 @@ CVODEBDFOptimizer::CVODEBDFOptimizer(std::shared_ptr<pele::BasePotential> potent
     udata.nhev = 0;
     udata.pot_ = potential_;
     udata.stored_grad = Array<double>(x0.size(), 0);
+    
     CVodeSStolerances(cvode_mem, udata.rtol, udata.atol);
+
     ret = CVodeSetUserData(cvode_mem, &udata);
 
-
     if (sparse) {
-        jac_setup_sparse();
-    }
-    else {
-        jac_setup_dense();
+      jac_setup_sparse();
+    } else {
+      jac_setup_dense();
     }
 
     N_VPrint(x0_N);
-
     CVodeSStolerances(cvode_mem, udata.rtol, udata.atol);
-
     g_ = udata.stored_grad;
     CVodeSetMaxNumSteps(cvode_mem, 1000000);
     CVodeSetStopTime(cvode_mem, tN);
