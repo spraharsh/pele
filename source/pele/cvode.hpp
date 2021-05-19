@@ -10,8 +10,8 @@
 #include <iostream>
 #include <vector>
 #include <memory>
-#include "cvode/cvode_proj.h"
 
+#include <cvode/cvode_proj.h>
 // Eigen linear algebra library
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
@@ -36,7 +36,6 @@
 #include <sunlinsol/sunlinsol_dense.h> /* access to dense SUNLinearSolver */
 #include "sunmatrix/sunmatrix_sparse.h" /* access to dense SUNLinearSolver */
 #include <sunlinsol/sunlinsol_klu.h>   /* access to dense SUNLinearSolver */
-
 
 
 extern "C" {
@@ -89,8 +88,12 @@ public:
                       const pele::Array<double> x0,
                       double tol=1e-5,
                       double rtol=1e-4,
-                      double atol=1e-4);
+                      double atol=1e-4,
+                      bool sparse = false);
     inline int get_nhev() const { return udata.nhev;}
+
+    void jac_setup_dense();
+    void jac_setup_sparse();
 
 protected:
     double H02;
@@ -124,6 +127,9 @@ inline pele::Array<double> pele_eq_N_Vector(N_Vector x) {
 
 int f(realtype t, N_Vector y, N_Vector ydot, void *user_data);
 int Jac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *user_data,
+        N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
+
+int Jac_sparse(realtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *user_data,
         N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 static int Jac2(realtype t, N_Vector y, N_Vector fy, SUNMatrix J,
                 void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);

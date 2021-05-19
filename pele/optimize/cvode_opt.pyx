@@ -10,7 +10,7 @@ from pele.potentials cimport _pele
 from pele.optimize import Result
 from pele.potentials._pythonpotential import as_cpp_potential
 
-
+from libcpp cimport bool
 cimport numpy as np
 cimport pele.optimize._pele_opt as _pele_opt
 from pele.optimize._pele_opt cimport shared_ptr
@@ -21,7 +21,7 @@ from cpython cimport bool as cbool
 cdef extern from "pele/cvode.hpp" namespace "pele":
     cdef cppclass cppCVODEBDFOptimizer "pele::CVODEBDFOptimizer":
         cppCVODEBDFOptimizer(shared_ptr[_pele.cBasePotential], _pele.Array[double],
-                             double, double, double) except +
+                             double, double, double, bool) except +
         double get_nhev() except +
 
 
@@ -32,7 +32,7 @@ cdef class _Cdef_CVODEBDFOptimizer_CPP(_pele_opt.GradientOptimizer):
        when it gets close to a minimum, just like an optimizer
     """
     cdef _pele.BasePotential pot
-    def __cinit__(self, potential, x0,  double tol=1e-4, double rtol = 1e-4, double atol = 1e-4, int nsteps=10000):
+    def __cinit__(self, potential, x0,  double tol=1e-4, double rtol = 1e-4, double atol = 1e-4, int nsteps=10000,  sparse = False):
         potential = as_cpp_potential(potential, verbose=True)
 
         self.pot = potential
@@ -40,7 +40,7 @@ cdef class _Cdef_CVODEBDFOptimizer_CPP(_pele_opt.GradientOptimizer):
         self.thisptr = shared_ptr[_pele_opt.cGradientOptimizer]( <_pele_opt.cGradientOptimizer*>
                 new cppCVODEBDFOptimizer(self.pot.thisptr,
                              _pele.Array[double](<double*> x0c.data, x0c.size),
-                                tol, rtol, atol))
+                                tol, rtol, atol, sparse))
         cdef cppCVODEBDFOptimizer* mxopt_ptr = <cppCVODEBDFOptimizer*> self.thisptr.get()
     
     def get_result(self):

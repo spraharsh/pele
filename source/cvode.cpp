@@ -21,7 +21,8 @@ CVODEBDFOptimizer::CVODEBDFOptimizer(std::shared_ptr<pele::BasePotential> potent
                                      const pele::Array<double> x0,
                                      double tol,
                                      double rtol,
-                                     double atol)
+                                     double atol,
+                                     bool sparse)
     : GradientOptimizer(potential, x0, tol),
       cvode_mem(CVodeCreate(CV_BDF)), // create cvode memory
       N_size(x0.size()),
@@ -46,17 +47,18 @@ CVODEBDFOptimizer::CVODEBDFOptimizer(std::shared_ptr<pele::BasePotential> potent
     CVodeSStolerances(cvode_mem, udata.rtol, udata.atol);
     ret = CVodeSetUserData(cvode_mem, &udata);
 
-    // define a sparse matrix
-    int nnz;
-    nnz = N_size*N_size;
-    A_sparse = SUNSparseMatrix(N_size, N_size, nnz, CSR_MAT);
-    A = SUNDenseMatrix(N_size, N_size);
-    udata.A = A;
+
+    if (sparse) {
+        jac_setup_sparse();
+    }
+    else {
+        jac_setup_dense();
+    }
+
     N_VPrint(x0_N);
-    LS = SUNLinSol_KLU(x0_N, A_sparse);
+
     CVodeSStolerances(cvode_mem, udata.rtol, udata.atol);
-    CVodeSetLinearSolver(cvode_mem, LS, A_sparse);
-    CVodeSetJacFn(cvode_mem, Jac);
+
     g_ = udata.stored_grad;
     CVodeSetMaxNumSteps(cvode_mem, 1000000);
     CVodeSetStopTime(cvode_mem, tN);
@@ -76,9 +78,26 @@ void CVODEBDFOptimizer::one_iteration() {
     nfev_ = udata.nfev;
     Array<double> step = xold-x_;
     std::cout << step << "step out \n";
-
-    
 };
+
+void CVODEBDFOptimizer::jac_setup_dense() {
+    A = SUNDenseMatrix(N_size, N_size);
+    LS = SUNLinSol_Dense(x0_N, A);
+    CVodeSetLinearSolver(cvode_mem, LS, A);
+    CVodeSetJacFn(cvode_mem, Jac);
+}
+
+void CVODEBDFOptimizer::jac_setup_sparse() {
+    // define a sparse matrix
+    int nnz;
+    nnz = N_size*N_size;
+    A_sparse = SUNSparseMatrix(N_size, N_size, nnz, CSR_MAT);
+    A = SUNDenseMatrix(N_size, N_size);
+    udata.A = A;
+    LS = SUNLinSol_KLU(x0_N, A_sparse);
+    CVodeSetLinearSolver(cvode_mem, LS, A_sparse);
+    CVodeSetJacFn(cvode_mem, Jac);
+}
 
 int f(double t, N_Vector y, N_Vector ydot, void *user_data) {
 
@@ -88,7 +107,6 @@ int f(double t, N_Vector y, N_Vector ydot, void *user_data) {
   // double energy = udata->pot_->get_energy_gradient(yw, g);
   double *fdata = NV_DATA_S(ydot);
   g = Array<double>(fdata, NV_LENGTH_S(ydot));
-
   // calculate negative grad g
   double energy = udata->pot_->get_energy_gradient(yw, g);
   udata->nfev += 1;
@@ -101,8 +119,8 @@ int f(double t, N_Vector y, N_Vector ydot, void *user_data) {
   return 0;
 }
 
-int Jac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *user_data,
-        N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) {
+int Jac_sparse(realtype t, N_Vector y, N_Vector fy, SUNMatrix J,
+               void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) {
   UserData udata = (UserData)user_data;
   std::cout << J << "J before \n";
   pele::Array<double> yw = pele_eq_N_Vector(y);
@@ -117,6 +135,22 @@ int Jac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *user_data,
   SUNMatrix J_sparse_dummy;
   J_sparse_dummy = SUNSparseFromDenseMatrix(udata->A, 0, CSR_MAT);
   SUNMatCopy_Sparse(J_sparse_dummy, J);
+  return 0;
+};
+
+int Jac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *user_data,
+        N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) {
+  UserData udata = (UserData)user_data;
+
+  pele::Array<double> yw = pele_eq_N_Vector(y);
+  Array<double> g = Array<double>(yw.size());
+  Array<double> h = Array<double>(yw.size() * yw.size());
+  udata->pot_->get_energy_gradient_hessian(pele_eq_N_Vector(y), g, h);
+  udata->nhev += 1;
+  double *hessdata = SUNDenseMatrix_Data(J);
+  for (size_t i = 0; i < h.size(); ++i) {
+    hessdata[i] = -h[i];
+  }
   return 0;
 };
 } // namespace pele
