@@ -3,8 +3,8 @@
 #include "cvode/cvode.h"
 #include "cvode/cvode_ls.h"
 #include "nvector/nvector_serial.h"
-#include "pele/optimizer.hpp"
 #include "pele/debug.hpp"
+#include "pele/optimizer.hpp"
 #include "sundials/sundials_linearsolver.h"
 #include "sundials/sundials_matrix.h"
 #include "sundials/sundials_nvector.h"
@@ -15,86 +15,76 @@
 #include <iostream>
 #include <memory>
 
-
 namespace pele {
-CVODEBDFOptimizer::CVODEBDFOptimizer(std::shared_ptr<pele::BasePotential> potential,
-                                     const pele::Array<double> x0,
-                                     double tol,
-                                     double rtol,
-                                     double atol,
-                                     bool sparse)
+CVODEBDFOptimizer::CVODEBDFOptimizer(
+    std::shared_ptr<pele::BasePotential> potential,
+    const pele::Array<double> x0, double tol, double rtol, double atol,
+    bool sparse)
     : GradientOptimizer(potential, x0, tol),
       cvode_mem(CVodeCreate(CV_BDF)), // create cvode memory
-      N_size(x0.size()),
-      t0(0),
-      tN(10000000.0)
-{
-    // dummy t0
-    double t0 = 0;
-    std::cout << x0 << "\n";
-    
-    Array<double> x0copy = x0.copy();
-    x0_N = N_Vector_eq_pele(x0copy);
-    // initialization of everything CVODE needs
-    int ret = CVodeInit(cvode_mem, f, t0, x0_N);
-    // initialize userdata
-    udata.rtol = rtol;
-    udata.atol = atol;
-    udata.nfev = 0;
-    udata.nhev = 0;
-    udata.pot_ = potential_;
-    udata.stored_grad = Array<double>(x0.size(), 0);
-    
-    CVodeSStolerances(cvode_mem, udata.rtol, udata.atol);
+      N_size(x0.size()), t0(0), tN(10000000.0) {
+  // dummy t0
+  double t0 = 0;
+  std::cout << x0 << "\n";
 
-    ret = CVodeSetUserData(cvode_mem, &udata);
+  Array<double> x0copy = x0.copy();
+  x0_N = N_Vector_eq_pele(x0copy);
+  // initialization of everything CVODE needs
+  int ret = CVodeInit(cvode_mem, f, t0, x0_N);
+  // initialize userdata
+  udata.rtol = rtol;
+  udata.atol = atol;
+  udata.nfev = 0;
+  udata.nhev = 0;
+  udata.pot_ = potential_;
+  udata.stored_grad = Array<double>(x0.size(), 0);
 
-    if (sparse) {
-      jac_setup_sparse();
-    } else {
-      jac_setup_dense();
-    }
+  CVodeSStolerances(cvode_mem, udata.rtol, udata.atol);
 
-    N_VPrint(x0_N);
-    CVodeSStolerances(cvode_mem, udata.rtol, udata.atol);
-    g_ = udata.stored_grad;
-    CVodeSetMaxNumSteps(cvode_mem, 1000000);
-    CVodeSetStopTime(cvode_mem, tN);
+  ret = CVodeSetUserData(cvode_mem, &udata);
+
+  if (sparse) {
+    jac_setup_sparse();
+  } else {
+    jac_setup_dense();
+  }
+  N_VPrint(x0_N);
+  CVodeSStolerances(cvode_mem, udata.rtol, udata.atol);
+  g_ = udata.stored_grad;
+  CVodeSetMaxNumSteps(cvode_mem, 1000000);
+  CVodeSetStopTime(cvode_mem, tN);
 };
 
-
-
 void CVODEBDFOptimizer::one_iteration() {
-    /* advance solver just one internal step */
-    Array<double> xold = x_;
-    int flag = CVode(cvode_mem, tN, x0_N, &t0, CV_ONE_STEP);
-    iter_number_ += 1;
-    x_ = pele_eq_N_Vector(x0_N);
-    g_ = udata.stored_grad;
-    rms_ = (norm(g_)/sqrt(x_.size()));
-    f_ = udata.stored_energy;
-    nfev_ = udata.nfev;
-    Array<double> step = xold-x_;
-    std::cout << step << "step out \n";
+  /* advance solver just one internal step */
+  Array<double> xold = x_;
+  int flag = CVode(cvode_mem, tN, x0_N, &t0, CV_ONE_STEP);
+  iter_number_ += 1;
+  x_ = pele_eq_N_Vector(x0_N);
+  g_ = udata.stored_grad;
+  rms_ = (norm(g_) / sqrt(x_.size()));
+  f_ = udata.stored_energy;
+  nfev_ = udata.nfev;
+  Array<double> step = xold - x_;
 };
 
 void CVODEBDFOptimizer::jac_setup_dense() {
-    A = SUNDenseMatrix(N_size, N_size);
-    LS = SUNLinSol_Dense(x0_N, A);
-    CVodeSetLinearSolver(cvode_mem, LS, A);
-    CVodeSetJacFn(cvode_mem, Jac);
+  A = SUNDenseMatrix(N_size, N_size);
+  LS = SUNLinSol_Dense(x0_N, A);
+  CVodeSetLinearSolver(cvode_mem, LS, A);
+  CVodeSetJacFn(cvode_mem, Jac);
 }
 
 void CVODEBDFOptimizer::jac_setup_sparse() {
-    // define a sparse matrix
-    int nnz;
-    nnz = N_size*N_size;
-    A_sparse = SUNSparseMatrix(N_size, N_size, nnz, CSR_MAT);
-    A = SUNDenseMatrix(N_size, N_size);
-    udata.A = A;
-    LS = SUNLinSol_KLU(x0_N, A_sparse);
-    CVodeSetLinearSolver(cvode_mem, LS, A_sparse);
-    CVodeSetJacFn(cvode_mem, Jac_sparse);
+  // define a sparse matrix
+  int nnz;
+  nnz = N_size * N_size;
+  A_sparse = SUNSparseMatrix(N_size, N_size, nnz, CSR_MAT);
+  A = SUNDenseMatrix(N_size, N_size);
+  udata.A = A;
+  LS = SUNLinSol_KLU(x0_N, A_sparse);
+  CVodeSetLinearSolver(cvode_mem, LS, A_sparse);
+  CVodeSetJacFn(cvode_mem, Jac_sparse);
 }
 
 int f(double t, N_Vector y, N_Vector ydot, void *user_data) {
@@ -120,7 +110,6 @@ int f(double t, N_Vector y, N_Vector ydot, void *user_data) {
 int Jac_sparse(realtype t, N_Vector y, N_Vector fy, SUNMatrix J,
                void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) {
   UserData udata = (UserData)user_data;
-  std::cout << J << "J before \n";
   pele::Array<double> yw = pele_eq_N_Vector(y);
   Array<double> g = Array<double>(yw.size());
   Array<double> h = Array<double>(yw.size() * yw.size());
@@ -131,8 +120,11 @@ int Jac_sparse(realtype t, N_Vector y, N_Vector fy, SUNMatrix J,
     hessdata[i] = -h[i];
   }
   SUNMatrix J_sparse_dummy;
+  SUNMatZero_Sparse(J);
+
   J_sparse_dummy = SUNSparseFromDenseMatrix(udata->A, 0, CSR_MAT);
   SUNMatCopy_Sparse(J_sparse_dummy, J);
+  csr_to_dense(J, udata->A);
   return 0;
 };
 
@@ -149,6 +141,29 @@ int Jac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *user_data,
   for (size_t i = 0; i < h.size(); ++i) {
     hessdata[i] = -h[i];
   }
+
+  SUNMatrix J_sparse_dummy;
+  J_sparse_dummy = SUNSparseFromDenseMatrix(J, 0, CSR_MAT);
+  csr_to_dense(J_sparse_dummy, J);
   return 0;
 };
+
+// TEST Helper
+// modified from AMICI to_dense function
+// note: only tested on symmetric matrices
+void csr_to_dense(SUNMatrix sparse, SUNMatrix dense) {
+  // set to zero
+  SUNMatZero_Dense(dense);
+  double *val_data = SUNDenseMatrix_Data(dense);
+  sunindextype j;
+  sunindextype irx;
+  for (j = 0; j < SM_NP_S(sparse); ++j)
+    for (irx = SM_INDEXPTRS_S(sparse)[j]; irx < SM_INDEXPTRS_S(sparse)[j + 1];
+         ++irx) {
+      val_data[SM_INDEXVALS_S(sparse)[irx] + j * SM_ROWS_S(sparse)] =
+          SM_DATA_S(sparse)[irx];
+    }
+  SUNDenseMatrix_Print(dense, stdout);
+}
+
 } // namespace pele

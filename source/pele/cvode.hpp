@@ -125,6 +125,8 @@ inline pele::Array<double> pele_eq_N_Vector(N_Vector x) {
     return pele::Array<double>(NV_DATA_S(x), N_VGetLength(x)).copy();
 }
 
+
+void csr_to_dense(SUNMatrix dense, SUNMatrix sparse);
 int f(realtype t, N_Vector y, N_Vector ydot, void *user_data);
 int Jac(realtype t, N_Vector y, N_Vector fy, SUNMatrix J, void *user_data,
         N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
