@@ -26,10 +26,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # set(SUNDIALS_EXTRA_LIBS  -lm /home/praharsh/anaconda3/x86_64-conda_cos6-linux-gnu/sysroot/usr/lib/librt.so CACHE STRING "Additional libraries")
 set(SUNDIALS_INCLUDE_DIR
-  /home/praharsh/.local/include
+  /home/praharsh/Dropbox/research/bv-libraries/sunnnew/sundials/SN_EXT/include/
   CACHE PATH "Location of SUNDIALS header files")
 set(SUNDIALS_LIBRARY_DIR
-  /home/praharsh/.local/lib
+  /home/praharsh/Dropbox/research/bv-libraries/sunnnew/sundials/SN_EXT/lib/
   CACHE PATH "Location of SUNDIALS libraries")
 
 find_library(SUNDIALS_SOLVER_KLU
@@ -40,10 +40,28 @@ find_library(SUNDIALS_SUNLINSOLKLU_LIB
   DOC "SUNDIALS KLU linear solver library")
 
 
+# SuperLU_MT include directory, libraries, and threading type
+set(SUPERLUMT_INCLUDE_DIR
+  /home/praharsh/Dropbox/research/bv-libraries/SuperLU_MT_3.1/SRC/
+  CACHE PATH "Location of SuperLU_MT KLU header files")
+
+set(SUPERLUMT_LIBRARIES
+   
+  CACHE STRING "SuperLU_MT libraries")
+
+set(SUPERLUMT_THREAD_TYPE
+  OpenMP
+  CACHE STRING "SuperLU_MT Threading")
+
 # Find the SUNDIALS libraries
 find_library(SUNDIALS_SOLVER_LIB
   sundials_cvode ${SUNDIALS_LIBRARY_DIR}
   DOC "CVODE library")
+
+
+find_library(SUNDIALS_SUNLINSOLSLUMT_LIB
+  sundials_sunlinsolsuperlumt ${SUNDIALS_LIBRARY_DIR}
+    DOC "SUNDIALS SuperLU_MT linear solver library")
 
 find_library(SUNDIALS_NVEC_LIB
   sundials_nvecserial ${SUNDIALS_LIBRARY_DIR}
@@ -87,6 +105,7 @@ set(pele_include ../../source)
 include_directories(${pele_include})
 include_directories(${SUNDIALS_INCLUDE_DIR})
 include_directories(${KLU_INCLUDE_DIR})
+include_directories(${SUPERLUMT_INCLUDE_DIR})
 message("pele include directory ${pele_include}")
 
 # build the pele library
@@ -100,8 +119,9 @@ add_executable(test_main ${sources})
 target_link_libraries(test_main pele_lib gtest gtest_main pthread)
 target_link_libraries(test_main ${SUNDIALS_LIBRARIES})
 target_link_libraries(test_main ${SUNDIALS_SUNLINSOLKLU_LIB})
-target_link_libraries(test_main ${SUNDIALS_SUNLINSOLKLU_LIB})
 target_link_libraries(test_main ${KLU_LIBRARIES})
+target_link_libraries(test_main ${SUNDIALS_SUNLINSOLSLUMT_LIB})
+target_link_libraries(test_main ${SUPERLUMT_LIBRARIES})
 add_subdirectory(benchmarks)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)

@@ -1,6 +1,7 @@
 #ifndef PYGMIN_SIMPLE_PAIRWISE_POTENTIAL_H
 #define PYGMIN_SIMPLE_PAIRWISE_POTENTIAL_H
 
+#include <cstdio>
 #include <memory>
 #include <vector>
 
@@ -360,19 +361,19 @@ inline double SimplePairwisePotential<pairwise_interaction, distance_policy>::ge
         size_t i1 = m_ndim * atom_i;
         for (size_t atom_j=0; atom_j<atom_i; ++atom_j) {
             size_t j1 = m_ndim * atom_j;
-
             _dist->get_rij(dr, &x[i1], &x[j1]);
             double r2 = 0;
             #pragma unroll
             for (size_t k=0; k<m_ndim; ++k) {
                 r2 += dr[k]*dr[k];
             }
-
             e += _interaction->energy(r2, sum_radii(atom_i, atom_j));
         }
     }
     return e;
 }
+
+
 
 template<typename pairwise_interaction, typename distance_policy>
 void SimplePairwisePotential<pairwise_interaction, distance_policy>::get_neighbors(

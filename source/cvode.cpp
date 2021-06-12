@@ -10,6 +10,8 @@
 #include "sundials/sundials_nvector.h"
 #include "sunmatrix/sunmatrix_dense.h"
 #include "sunmatrix/sunmatrix_sparse.h"
+#include <sunlinsol/sunlinsol_superlumt.h>  /* access to SuperLUMT linear solver    */
+    
 #include <cstddef>
 #include <cstdio>
 #include <iostream>
@@ -25,7 +27,6 @@ CVODEBDFOptimizer::CVODEBDFOptimizer(
       N_size(x0.size()), t0(0), tN(10000000.0) {
   // dummy t0
   double t0 = 0;
-  std::cout << x0 << "\n";
 
   Array<double> x0copy = x0.copy();
   x0_N = N_Vector_eq_pele(x0copy);
@@ -65,7 +66,7 @@ void CVODEBDFOptimizer::one_iteration() {
   rms_ = (norm(g_) / sqrt(x_.size()));
   f_ = udata.stored_energy;
   nfev_ = udata.nfev;
-  Array<double> step = xold - x_;
+  Array<double> step = x_-xold;
 };
 
 void CVODEBDFOptimizer::jac_setup_dense() {
@@ -82,7 +83,7 @@ void CVODEBDFOptimizer::jac_setup_sparse() {
   A_sparse = SUNSparseMatrix(N_size, N_size, nnz, CSR_MAT);
   A = SUNDenseMatrix(N_size, N_size);
   udata.A = A;
-  LS = SUNLinSol_KLU(x0_N, A_sparse);
+  LS = SUNLinSol_SuperLUMT(x0_N, A_sparse, 1);
   CVodeSetLinearSolver(cvode_mem, LS, A_sparse);
   CVodeSetJacFn(cvode_mem, Jac_sparse);
 }
@@ -163,7 +164,5 @@ void csr_to_dense(SUNMatrix sparse, SUNMatrix dense) {
       val_data[SM_INDEXVALS_S(sparse)[irx] + j * SM_ROWS_S(sparse)] =
           SM_DATA_S(sparse)[irx];
     }
-  SUNDenseMatrix_Print(dense, stdout);
 }
-
 } // namespace pele
